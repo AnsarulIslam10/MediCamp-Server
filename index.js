@@ -26,6 +26,7 @@ async function run() {
     await client.connect();
 
     const campCollection = client.db("mediCampDB").collection("camps");
+    const userCollection = client.db("mediCampDB").collection("users");
 
     //camps related apis
     app.get("/all-camps", async (req, res) => {
@@ -61,6 +62,20 @@ async function run() {
       const result = await campCollection.find().sort({participantCount: 1}).limit(6).toArray()
       res.send(result)
     })
+
+    // users related api
+    app.post("/users", async (req, res) => {
+      const user = req.body;
+      // insert email if user doesn't exists
+      const query = { email: user.email };
+      const existingUser = await userCollection.findOne(query);
+      if (existingUser) {
+        return res.send({ message: "user already exists", insertedId: null });
+      }
+      const result = await userCollection.insertOne(user);
+      res.send(result);
+    });
+
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
