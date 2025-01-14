@@ -30,6 +30,7 @@ async function run() {
     //camps related apis
     app.get("/all-camps", async (req, res) => {
       const search = req.query.search;
+      const sortBy = req.query.sortBy;
       let query = {
         campName: {
           $regex: search,
@@ -37,7 +38,16 @@ async function run() {
         },
       };
 
-      const result = await campCollection.find(query).toArray();
+      let sort = {};
+      if (sortBy === "most-registered") {
+        sort = { participantCount: -1 };
+      } else if (sortBy === "camp-fees") {
+        sort = { campFees: 1 };
+      } else if (sortBy === "alphabetical") {
+        sort = { campName: 1 };
+      }
+
+      const result = await campCollection.find(query).sort(sort).toArray();
       res.send(result);
     });
 
