@@ -9,8 +9,7 @@ const port = process.env.PORT | 5000;
 app.use(cors());
 app.use(express.json());
 
-const uri =
-  `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.8ggzn.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.8ggzn.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -26,14 +25,21 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
 
-
-    const campCollection = client.db("mediCampDB").collection('camps')
+    const campCollection = client.db("mediCampDB").collection("camps");
 
     //camps related apis
-    app.get('/all-camps', async(req, res)=>{
-        const result = await campCollection.find().toArray()
-        res.send(result)
-    })
+    app.get("/all-camps", async (req, res) => {
+      const search = req.query.search;
+      let query = {
+        campName: {
+          $regex: search,
+          $options: "i",
+        },
+      };
+
+      const result = await campCollection.find(query).toArray();
+      res.send(result);
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
