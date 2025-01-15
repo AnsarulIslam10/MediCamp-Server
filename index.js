@@ -111,6 +111,12 @@ async function run() {
       res.send(result);
     });
 
+    app.get('/camps/organizer/:email', async(req, res)=>{
+      const email = req.params.email;
+      const query = {email: email}
+      const result = await campCollection.find(query).toArray()
+      res.send(result)
+    })
     
     // users related api
     app.post("/users", async (req, res) => {
