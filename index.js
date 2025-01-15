@@ -34,6 +34,9 @@ async function run() {
 
     const campCollection = client.db("mediCampDB").collection("camps");
     const userCollection = client.db("mediCampDB").collection("users");
+    const registeredCampCollection = client
+      .db("mediCampDB")
+      .collection("registeredCamps");
 
     // jwt token
     app.post("/jwt", async (req, res) => {
@@ -138,8 +141,6 @@ async function run() {
       res.send(result);
     });
 
-
-
     // users related api
     app.post("/users", async (req, res) => {
       const user = req.body;
@@ -151,6 +152,25 @@ async function run() {
       }
       const result = await userCollection.insertOne(user);
       res.send(result);
+    });
+
+    // join camp/ registered camp related apis
+    app.post("/registered-camps", async (req, res) => {
+      const registeredCamp = req.body;
+      const { campId } = registeredCamp;
+      console.log(campId);
+      const insertResult = await registeredCampCollection.insertOne(
+        registeredCamp
+      );
+      const updateResult = await campCollection.updateOne(
+        { _id: new ObjectId(campId) },
+        {
+          $inc: {
+            participantCount: 1,
+          },
+        }
+      );
+      res.send(insertResult);
     });
 
     // Send a ping to confirm a successful connection
