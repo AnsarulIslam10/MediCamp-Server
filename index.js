@@ -97,11 +97,12 @@ async function run() {
     app.get("/popular-camps", async (req, res) => {
       const result = await campCollection
         .find()
-        .sort({ participantCount: 1 })
+        .sort({ participantCount: -1 })
         .limit(6)
         .toArray();
       res.send(result);
     });
+    
     app.post("/add-camp", async (req, res) => {
       const newPost = req.body;
       const result = await campCollection.insertOne(newPost);
