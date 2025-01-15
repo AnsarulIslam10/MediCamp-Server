@@ -111,13 +111,32 @@ async function run() {
       res.send(result);
     });
 
-    app.get('/camps/organizer/:email', async(req, res)=>{
+    app.get("/camps/organizer/:email", async (req, res) => {
       const email = req.params.email;
-      const query = {email: email}
-      const result = await campCollection.find(query).toArray()
+      const query = { email: email };
+      const result = await campCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    app.patch("/update-camp/:campId", async (req, res) => {
+      const data = req.body;
+      const id = req.params.campId;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          campName: data.campName,
+          campFees: data.campFees,
+          dateTime: data.dateTime,
+          participantCount: data.participantCount,
+          healthcareProfessionalName: data.healthcareProfessionalName,
+          location: data.location,
+          description: data.description,
+        },
+      };
+      const result = await campCollection.updateOne(filter, updateDoc)
       res.send(result)
-    })
-    
+    });
+
     // users related api
     app.post("/users", async (req, res) => {
       const user = req.body;
