@@ -7,13 +7,13 @@ const cors = require("cors");
 const port = process.env.PORT | 5000;
 
 //middleware
-const corsOptions = {
-  origin: ["http://localhost:5173"],
-  credentials: true,
-  optionalSuccessStatus: 200,
-};
+// const corsOptions = {
+//   origin: ["http://localhost:5173"],
+//   credentials: true,
+//   optionalSuccessStatus: 200,
+// };
 
-app.use(cors(corsOptions));
+app.use(cors());
 app.use(express.json());
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.8ggzn.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
@@ -26,22 +26,6 @@ const client = new MongoClient(uri, {
     deprecationErrors: true,
   },
 });
-
-// verifyToken
-const verifyToken = (req, res, next) => {
-  console.log("inside verify token", req.headers.authorization);
-  if (!req.headers.authorization) {
-    return res.status(401).send({ message: "unauthorized access" });
-  }
-  const token = req.headers.authorization.split(" ")[1];
-  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
-    if (err) {
-      return res.status(401).send({ message: "unauthorized access" });
-    }
-    req.decoded = decoded;
-    next();
-  });
-};
 
 async function run() {
   try {
@@ -57,14 +41,24 @@ async function run() {
       const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
         expiresIn: "7d",
       });
-      res
-        .cookie("token", token, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
-        })
-        .send({ success: true });
+      res.send({ token });
     });
+
+    // verifyToken
+    const verifyToken = (req, res, next) => {
+      console.log("inside verify token", req.headers.authorization);
+      if (!req.headers.authorization) {
+        return res.status(401).send({ message: "unauthorized access" });
+      }
+      const token = req.headers.authorization.split(" ")[1];
+      jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+        if (err) {
+          return res.status(401).send({ message: "unauthorized access" });
+        }
+        req.decoded = decoded;
+        next();
+      });
+    };
 
     //camps related apis
     app.get("/all-camps", async (req, res) => {
@@ -111,14 +105,14 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/camps/organizer/:email", async (req, res) => {
+    app.get("/camps/organizer/:email", verifyToken, async (req, res) => {
       const email = req.params.email;
       const query = { email: email };
       const result = await campCollection.find(query).toArray();
       res.send(result);
     });
 
-    app.patch("/update-camp/:campId", async (req, res) => {
+    app.patch("/update-camp/:campId", verifyToken, async (req, res) => {
       const data = req.body;
       const id = req.params.campId;
       const filter = { _id: new ObjectId(id) };
@@ -133,8 +127,8 @@ async function run() {
           description: data.description,
         },
       };
-      const result = await campCollection.updateOne(filter, updateDoc)
-      res.send(result)
+      const result = await campCollection.updateOne(filter, updateDoc);
+      res.send(result);
     });
 
     // users related api
