@@ -102,7 +102,7 @@ async function run() {
         .toArray();
       res.send(result);
     });
-    
+
     app.post("/add-camp", async (req, res) => {
       const newPost = req.body;
       const result = await campCollection.insertOne(newPost);
@@ -173,6 +173,30 @@ async function run() {
       );
       res.send(insertResult);
     });
+
+    app.get('/registered-camps/:email', async(req, res)=>{
+      const email = req.params.email;
+      const query = {participantEmail: email}
+      const result = await registeredCampCollection.find(query).toArray()
+      res.send(result)
+    })
+
+    app.delete("/registered-camps/:id", verifyToken, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await registeredCampCollection.deleteOne(query);
+      res.send(result);
+    });
+    // participant analytics
+    // app.get('/participant-analytics/:email', verifyToken, async(req, res)=>{
+    //   const email = req.params.email;
+    //   const query = {participantEmail: email};
+    //   const registeredCamps = await registeredCampCollection.find(query).toArray()
+    //   const campIds = registeredCamps.map(camp => new ObjectId(camp.campId))
+    //   const campsData = await campCollection.find({_id: {$in: campIds}}).toArray()
+    //   console.log(campsData)
+    //   res.send(campsData)
+    // })
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
