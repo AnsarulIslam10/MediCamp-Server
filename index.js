@@ -8,9 +8,7 @@ const port = process.env.PORT | 5000;
 
 //middleware
 const corsOptions = {
-  origin: [
-    "http://localhost:5173",
-  ],
+  origin: ["http://localhost:5173"],
   credentials: true,
   optionalSuccessStatus: 200,
 };
@@ -59,11 +57,13 @@ async function run() {
       const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
         expiresIn: "7d",
       });
-      res.cookie("token", token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
-      }).send({ success: true})
+      res
+        .cookie("token", token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+        })
+        .send({ success: true });
     });
 
     //camps related apis
@@ -96,6 +96,7 @@ async function run() {
       const result = await campCollection.findOne(query);
       res.send(result);
     });
+
     app.get("/popular-camps", async (req, res) => {
       const result = await campCollection
         .find()
@@ -104,7 +105,13 @@ async function run() {
         .toArray();
       res.send(result);
     });
+    app.post("/add-camp", async (req, res) => {
+      const newPost = req.body;
+      const result = await campCollection.insertOne(newPost);
+      res.send(result);
+    });
 
+    
     // users related api
     app.post("/users", async (req, res) => {
       const user = req.body;
