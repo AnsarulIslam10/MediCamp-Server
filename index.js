@@ -131,6 +131,15 @@ async function run() {
       res.send(result);
     });
 
+    app.delete("/camp/:id", verifyToken, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await campCollection.deleteOne(query);
+      res.send(result);
+    });
+
+
+
     // users related api
     app.post("/users", async (req, res) => {
       const user = req.body;
