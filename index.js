@@ -171,29 +171,29 @@ async function run() {
       res.send({ admin });
     });
 
-    app.patch('/update-user/:email', verifyToken, async(req, res)=>{
-      const email = req.params.email
-      const {name, photoURL, phoneNumber, address} = req.body;
-      const filter = {email: email}
-      const updateDoc ={
+    app.patch("/update-user/:email", verifyToken, async (req, res) => {
+      const email = req.params.email;
+      const { name, photoURL, phoneNumber, address } = req.body;
+      const filter = { email: email };
+      const updateDoc = {
         $set: {
           name,
           photoURL,
           phoneNumber,
           address,
-        }
-      }
-      const result = await userCollection.updateOne(filter, updateDoc)
-      res.send(result)
-    })
+        },
+      };
+      const result = await userCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    });
 
-    app.get('/user/:email', verifyToken, async(req, res)=>{
+    app.get("/user/:email", verifyToken, async (req, res) => {
       const email = req.params.email;
-      const query = {email: email}
-      const result = await userCollection.findOne(query)
-      console.log(result)
-      res.send(result)
-    })
+      const query = { email: email };
+      const result = await userCollection.findOne(query);
+      console.log(result);
+      res.send(result);
+    });
 
     // join camp/ registered camp related apis
     app.post("/registered-camps", async (req, res) => {
@@ -214,11 +214,36 @@ async function run() {
       res.send(insertResult);
     });
 
+    app.get("/registered-camps", async (req, res) => {
+      const result = await registeredCampCollection.find().toArray();
+      res.send(result);
+    });
+
     app.get("/registered-camps/:email", async (req, res) => {
       const email = req.params.email;
       const query = { participantEmail: email };
       const result = await registeredCampCollection.find(query).toArray();
       res.send(result);
+    });
+
+    app.patch("/registered-camps/:email", async (req, res) => {
+      const email = req.params.email;
+      const { confirmationStatus, campId} = req.body;
+
+      const registeredCampQuery = { participantEmail: email, campId: campId };
+      const updateCamp = await registeredCampCollection.updateOne(
+        registeredCampQuery,
+        {
+          $set: { confirmationStatus: confirmationStatus },
+        }
+      );
+      const paymentQuery = { email: email, campId: campId };
+      console.log('register query===>', registeredCampQuery)
+      console.log('payment query==>',paymentQuery)
+      const updatePayment = await paymentCollection.updateOne(paymentQuery, {
+        $set: { confirmationStatus: confirmationStatus },
+      });
+      res.send(updateCamp);
     });
 
     app.delete("/registered-camps/:id", verifyToken, async (req, res) => {
