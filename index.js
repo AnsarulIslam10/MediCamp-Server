@@ -157,6 +157,20 @@ async function run() {
       res.send(result);
     });
 
+    app.get("/users/admin/:email", verifyToken, async (req, res) => {
+      const email = req.params.email;
+      if (email !== req.decoded.email) {
+        return res.status(403).send({ message: "Forbidden Access" });
+      }
+      const query = { email: email };
+      const user = await userCollection.findOne(query);
+      let admin = false;
+      if (user) {
+        admin = user?.role === "admin";
+      }
+      res.send({ admin });
+    });
+
     // join camp/ registered camp related apis
     app.post("/registered-camps", async (req, res) => {
       const registeredCamp = req.body;
@@ -222,10 +236,10 @@ async function run() {
         return res.status(403).send({ message: "forbidden access" });
       }
       const result = await paymentCollection.find(query).toArray();
-      console.log('pay', result)
+      console.log("pay", result);
       res.send(result);
     });
-    
+
     app.post("/payments", async (req, res) => {
       const payment = req.body;
       const paymentResult = await paymentCollection.insertOne(payment);
