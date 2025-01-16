@@ -38,6 +38,7 @@ async function run() {
     const registeredCampCollection = client
       .db("mediCampDB")
       .collection("registeredCamps");
+    const paymentCollection = client.db("mediCampDB").collection("payments");
 
     // jwt token
     app.post("/jwt", async (req, res) => {
@@ -203,7 +204,7 @@ async function run() {
     app.post("/create-payment-intent", async (req, res) => {
       const { campFees } = req.body;
       const amount = parseInt(campFees * 100);
-      console.log(amount, 'inside intent')
+      console.log(amount, "inside intent");
       const paymentIntent = await stripe.paymentIntents.create({
         amount: amount,
         currency: "usd",
@@ -213,6 +214,20 @@ async function run() {
       res.send({
         clientSecret: paymentIntent.client_secret,
       });
+    });
+
+    app.post("/payments", async (req, res) => {
+      const payment = req.body;
+      const paymentResult = await paymentCollection.insertOne(payment);
+      const { registeredCampId } = payment;
+      const query = { _id: new ObjectId(registeredCampId) };
+      console.log(query);
+      const updateResult = await registeredCampCollection.updateOne(query, {
+        $set: {
+          paymentStatus: "paid",
+        },
+      });
+      res.send(paymentResult);
     });
 
     // Send a ping to confirm a successful connection
