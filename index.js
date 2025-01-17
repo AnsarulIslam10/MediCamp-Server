@@ -291,9 +291,20 @@ async function run() {
     app.delete("/registered-camps/:id", verifyToken, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
+      const registeredCamp = await registeredCampCollection.findOne(query);
+      const campId = registeredCamp.campId;
       const result = await registeredCampCollection.deleteOne(query);
+      const updateResult = await campCollection.updateOne(
+        { _id: new ObjectId(campId) },
+        {
+          $inc: {
+            participantCount: -1,
+          },
+        }
+      );
       res.send(result);
     });
+
     // participant analytics
     // app.get('/participant-analytics/:email', verifyToken, async(req, res)=>{
     //   const email = req.params.email;
