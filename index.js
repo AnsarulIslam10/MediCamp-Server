@@ -39,6 +39,7 @@ async function run() {
       .db("mediCampDB")
       .collection("registeredCamps");
     const paymentCollection = client.db("mediCampDB").collection("payments");
+    const feedbackCollection = client.db("mediCampDB").collection("feedbacks");
 
     // jwt token
     app.post("/jwt", async (req, res) => {
@@ -63,6 +64,18 @@ async function run() {
         req.decoded = decoded;
         next();
       });
+    };
+
+    // verify admin
+    const verifyAdmin = async (req, res, next) => {
+      const email = req.decoded.email;
+      const query = { email: email };
+      const user = await userCollection.findOne(query);
+      const isAdmin = user?.role === "admin";
+      if (!isAdmin) {
+        return res.status(403).send({ message: "Forbidden Access" });
+      }
+      next();
     };
 
     //camps related apis
@@ -111,7 +124,7 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/camps/organizer/:email", verifyToken, async (req, res) => {
+    app.get("/camps/organizer/:email", verifyToken, verifyAdmin, async (req, res) => {
       const email = req.params.email;
       const query = { email: email };
       const result = await campCollection.find(query).toArray();
@@ -302,6 +315,14 @@ async function run() {
       });
       res.send(paymentResult);
     });
+
+
+    // Rating and Feedback
+    app.post('/feedback', async(req, res)=>{
+      const feedback = req.body;
+      const result = await feedbackCollection.insertOne(feedback)
+      res.send(result)
+    })
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
