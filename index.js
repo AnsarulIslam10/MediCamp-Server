@@ -124,12 +124,17 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/camps/organizer/:email", verifyToken, verifyAdmin, async (req, res) => {
-      const email = req.params.email;
-      const query = { email: email };
-      const result = await campCollection.find(query).toArray();
-      res.send(result);
-    });
+    app.get(
+      "/camps/organizer/:email",
+      verifyToken,
+      verifyAdmin,
+      async (req, res) => {
+        const email = req.params.email;
+        const query = { email: email };
+        const result = await campCollection.find(query).toArray();
+        res.send(result);
+      }
+    );
 
     app.patch("/update-camp/:campId", verifyToken, async (req, res) => {
       const data = req.body;
@@ -241,7 +246,7 @@ async function run() {
 
     app.patch("/registered-camps/:email", async (req, res) => {
       const email = req.params.email;
-      const { confirmationStatus, campId} = req.body;
+      const { confirmationStatus, campId } = req.body;
 
       const registeredCampQuery = { participantEmail: email, campId: campId };
       const updateCamp = await registeredCampCollection.updateOne(
@@ -251,8 +256,8 @@ async function run() {
         }
       );
       const paymentQuery = { email: email, campId: campId };
-      console.log('register query===>', registeredCampQuery)
-      console.log('payment query==>',paymentQuery)
+      console.log("register query===>", registeredCampQuery);
+      console.log("payment query==>", paymentQuery);
       const updatePayment = await paymentCollection.updateOne(paymentQuery, {
         $set: { confirmationStatus: confirmationStatus },
       });
@@ -316,13 +321,16 @@ async function run() {
       res.send(paymentResult);
     });
 
-
     // Rating and Feedback
-    app.post('/feedback', async(req, res)=>{
+    app.get("/feedback", async (req, res) => {
+      const result = await feedbackCollection.find().toArray();
+      res.send(result);
+    });
+    app.post("/feedback", async (req, res) => {
       const feedback = req.body;
-      const result = await feedbackCollection.insertOne(feedback)
-      res.send(result)
-    })
+      const result = await feedbackCollection.insertOne(feedback);
+      res.send(result);
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
