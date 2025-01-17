@@ -83,10 +83,11 @@ async function run() {
       const search = req.query.search;
       const sortBy = req.query.sortBy;
       let query = {
-        campName: {
-          $regex: search,
-          $options: "i",
-        },
+        $or: [
+          { campName: { $regex: search, $options: "i" } },
+          { healthcareProfessionalName: { $regex: search, $options: "i" } },
+          { dateTime: { $regex: search, $options: "i" } },
+        ],
       };
 
       let sort = {};
@@ -140,7 +141,7 @@ async function run() {
           },
         };
 
-        const finalQuery = {...query, ...searchQuery}
+        const finalQuery = { ...query, ...searchQuery };
         const pageNumber = parseInt(page);
         const limitNumber = parseInt(limit);
         const totalCount = await campCollection.countDocuments(query);
@@ -254,7 +255,7 @@ async function run() {
       res.send(insertResult);
     });
 
-    app.get("/registered-camps", async (req, res) => {
+    app.get("/registered-camps", verifyToken, verifyAdmin, async (req, res) => {
       const result = await registeredCampCollection.find().toArray();
       res.send(result);
     });
