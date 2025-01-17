@@ -135,10 +135,11 @@ async function run() {
         const { page = 1, limit = 10 } = req.query;
         const query = { email: email };
         let searchQuery = {
-          campName: {
-            $regex: search,
-            $options: "i",
-          },
+          $or: [
+            { campName: { $regex: search, $options: "i" } },
+            { healthcareProfessionalName: { $regex: search, $options: "i" } },
+            { dateTime: { $regex: search, $options: "i" } },
+          ],
         };
 
         const finalQuery = { ...query, ...searchQuery };
