@@ -130,9 +130,31 @@ async function run() {
       verifyAdmin,
       async (req, res) => {
         const email = req.params.email;
+        const search = req.query.search;
+        const { page = 1, limit = 10 } = req.query;
         const query = { email: email };
-        const result = await campCollection.find(query).toArray();
-        res.send(result);
+        let searchQuery = {
+          campName: {
+            $regex: search,
+            $options: "i",
+          },
+        };
+
+        const finalQuery = {...query, ...searchQuery}
+        const pageNumber = parseInt(page);
+        const limitNumber = parseInt(limit);
+        const totalCount = await campCollection.countDocuments(query);
+        const result = await campCollection
+          .find(finalQuery)
+          .skip((pageNumber - 1) * limitNumber)
+          .limit(limitNumber)
+          .toArray();
+        res.send({
+          result,
+          totalCount,
+          totalPages: Math.ceil(totalCount / limitNumber),
+          currentPage: pageNumber,
+        });
       }
     );
 
