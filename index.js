@@ -305,16 +305,29 @@ async function run() {
       res.send(result);
     });
 
-    // participant analytics
-    // app.get('/participant-analytics/:email', verifyToken, async(req, res)=>{
-    //   const email = req.params.email;
-    //   const query = {participantEmail: email};
-    //   const registeredCamps = await registeredCampCollection.find(query).toArray()
-    //   const campIds = registeredCamps.map(camp => new ObjectId(camp.campId))
-    //   const campsData = await campCollection.find({_id: {$in: campIds}}).toArray()
-    //   console.log(campsData)
-    //   res.send(campsData)
-    // })
+    //analytics
+    app.get("/analytics/:email", verifyToken, async (req, res) => {
+      const email = req.params.email;
+      const registeredCamps = await registeredCampCollection
+        .find({ participantEmail: email })
+        .toArray();
+      const campIds = registeredCamps.map((camp) => camp.campId);
+
+      const payments = await paymentCollection
+        .find({ email: email, campId: { $in: campIds } })
+        .toArray();
+      const analyticsData = registeredCamps.map((camp) => {
+        const payment = payments.find((p) => p.campId === camp.campId) || {};
+        return {
+          campName: camp.campName,
+          campFees: camp.campFees,
+          paymentStatus: payment.paymentStatus || "unpaid",
+          amountPaid: payment.campFee || 0,
+        };
+      });
+
+      res.send(analyticsData);
+    });
 
     // stripe payment intent
     app.post("/create-payment-intent", async (req, res) => {
