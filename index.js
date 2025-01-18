@@ -5,14 +5,7 @@ const app = express();
 const jwt = require("jsonwebtoken");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const cors = require("cors");
-const port = process.env.PORT | 5000;
-
-//middleware
-// const corsOptions = {
-//   origin: ["http://localhost:5173"],
-//   credentials: true,
-//   optionalSuccessStatus: 200,
-// };
+const port = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(express.json());
@@ -31,7 +24,7 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
 
     const campCollection = client.db("mediCampDB").collection("camps");
     const userCollection = client.db("mediCampDB").collection("users");
@@ -52,7 +45,6 @@ async function run() {
 
     // verifyToken
     const verifyToken = (req, res, next) => {
-      console.log("inside verify token", req.headers.authorization);
       if (!req.headers.authorization) {
         return res.status(401).send({ message: "unauthorized access" });
       }
@@ -233,7 +225,6 @@ async function run() {
       const email = req.params.email;
       const query = { email: email };
       const result = await userCollection.findOne(query);
-      console.log(result);
       res.send(result);
     });
 
@@ -241,7 +232,6 @@ async function run() {
     app.post("/registered-camps", async (req, res) => {
       const registeredCamp = req.body;
       const { campId } = registeredCamp;
-      console.log(campId);
       const insertResult = await registeredCampCollection.insertOne(
         registeredCamp
       );
@@ -280,8 +270,6 @@ async function run() {
         }
       );
       const paymentQuery = { email: email, campId: campId };
-      console.log("register query===>", registeredCampQuery);
-      console.log("payment query==>", paymentQuery);
       const updatePayment = await paymentCollection.updateOne(paymentQuery, {
         $set: { confirmationStatus: confirmationStatus },
       });
@@ -333,7 +321,6 @@ async function run() {
     app.post("/create-payment-intent", async (req, res) => {
       const { campFees } = req.body;
       const amount = parseInt(campFees * 100);
-      console.log(amount, "inside intent");
       const paymentIntent = await stripe.paymentIntents.create({
         amount: amount,
         currency: "usd",
@@ -351,7 +338,6 @@ async function run() {
         return res.status(403).send({ message: "forbidden access" });
       }
       const result = await paymentCollection.find(query).toArray();
-      console.log("pay", result);
       res.send(result);
     });
 
@@ -360,7 +346,6 @@ async function run() {
       const paymentResult = await paymentCollection.insertOne(payment);
       const { registeredCampId } = payment;
       const query = { _id: new ObjectId(registeredCampId) };
-      console.log(query);
       const updateResult = await registeredCampCollection.updateOne(query, {
         $set: {
           paymentStatus: "paid",
@@ -381,10 +366,10 @@ async function run() {
     });
 
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log(
-      "Pinged your deployment. You successfully connected to MongoDB!"
-    );
+    // await client.db("admin").command({ ping: 1 });
+    // console.log(
+    //   "Pinged your deployment. You successfully connected to MongoDB!"
+    // );
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
