@@ -25,7 +25,7 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    // await client.connect();
+    await client.connect();
 
     const campCollection = client.db("mediCampDB").collection("camps");
     const userCollection = client.db("mediCampDB").collection("users");
@@ -73,7 +73,7 @@ async function run() {
 
     //camps related apis
     app.get("/all-camps", async (req, res) => {
-      const search = req.query.search;
+      const search = req.query.search || "";
       const sortBy = req.query.sortBy;
       let query = {
         $or: [
@@ -124,7 +124,7 @@ async function run() {
       verifyAdmin,
       async (req, res) => {
         const email = req.params.email;
-        const search = req.query.search;
+        const search = req.query.search || "";
         const { page = 1, limit = 10 } = req.query;
         const query = { email: email };
         let searchQuery = {
@@ -248,15 +248,58 @@ async function run() {
     });
 
     app.get("/registered-camps", verifyToken, verifyAdmin, async (req, res) => {
-      const result = await registeredCampCollection.find().toArray();
-      res.send(result);
+      const search = req.query.search || "";
+      const { page = 1, limit = 10 } = req.query;
+      let searchQuery = {
+        $or: [
+          { campName: { $regex: search, $options: "i" } },
+          { participantName: { $regex: search, $options: "i" } },
+          { paymentStatus: { $regex: search, $options: "i" } },
+          { confirmationStatus: { $regex: search, $options: "i" } },
+        ],
+      };
+      const pageNumber = parseInt(page);
+      const limitNumber = parseInt(limit);
+      const totalCount = await registeredCampCollection.countDocuments();
+      const result = await registeredCampCollection
+        .find(searchQuery)
+        .skip((pageNumber - 1) * limitNumber)
+        .limit(limitNumber)
+        .toArray();
+      res.send({
+        result,
+        totalCount,
+        totalPages: Math.ceil(totalCount / limitNumber),
+        currentPage: pageNumber,
+      });
     });
 
-    app.get("/registered-camps/:email", async (req, res) => {
+    app.get("/registered-camps/:email", verifyToken, async (req, res) => {
       const email = req.params.email;
+      const search = req.query.search || "";
+      const { page = 1, limit = 10 } = req.query;
       const query = { participantEmail: email };
-      const result = await registeredCampCollection.find(query).toArray();
-      res.send(result);
+      let searchQuery = {
+        $or: [
+          { campName: { $regex: search, $options: "i" } },
+          { confirmationStatus: { $regex: search, $options: "i" } },
+        ],
+      };
+      const finalQuery = { ...query, ...searchQuery };
+      const pageNumber = parseInt(page);
+      const limitNumber = parseInt(limit);
+      const totalCount = await registeredCampCollection.countDocuments(query);
+      const result = await registeredCampCollection
+        .find(finalQuery)
+        .skip((pageNumber - 1) * limitNumber)
+        .limit(limitNumber)
+        .toArray();
+      res.send({
+        result,
+        totalCount,
+        totalPages: Math.ceil(totalCount / limitNumber),
+        currentPage: pageNumber,
+      });
     });
 
     app.patch("/registered-camps/:email", async (req, res) => {
@@ -334,12 +377,35 @@ async function run() {
     });
 
     app.get("/payments/:email", verifyToken, async (req, res) => {
-      const query = { email: req.params.email };
+      const email = req.params.email;
+      const search = req.query.search || "";
+      const { page = 1, limit = 10 } = req.query;
+      const query = { email: email };
       if (req.params.email !== req.decoded.email) {
         return res.status(403).send({ message: "forbidden access" });
       }
-      const result = await paymentCollection.find(query).toArray();
-      res.send(result);
+      let searchQuery = {
+        $or: [
+          { campName: { $regex: search, $options: "i" } },
+          { confirmationStatus: { $regex: search, $options: "i" } },
+        ],
+      };
+      const finalQuery = { ...query, ...searchQuery };
+      const pageNumber = parseInt(page);
+      const limitNumber = parseInt(limit);
+      const totalCount = await paymentCollection.countDocuments(query);
+
+      const result = await paymentCollection
+        .find(finalQuery)
+        .skip((pageNumber - 1) * limitNumber)
+        .limit(limitNumber)
+        .toArray();
+      res.send({
+        result,
+        totalCount,
+        totalPages: Math.ceil(totalCount / limitNumber),
+        currentPage: pageNumber,
+      });
     });
 
     app.post("/payments", async (req, res) => {
@@ -367,7 +433,7 @@ async function run() {
     });
 
     // Send a ping to confirm a successful connection
-    // await client.db("admin").command({ ping: 1 });
+    await client.db("admin").command({ ping: 1 });
     // console.log(
     //   "Pinged your deployment. You successfully connected to MongoDB!"
     // );
