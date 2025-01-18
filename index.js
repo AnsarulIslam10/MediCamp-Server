@@ -75,6 +75,7 @@ async function run() {
     app.get("/all-camps", async (req, res) => {
       const search = req.query.search || "";
       const sortBy = req.query.sortBy;
+      const { page = 1, limit = 9 } = req.query;
       let query = {
         $or: [
           { campName: { $regex: search, $options: "i" } },
@@ -91,9 +92,22 @@ async function run() {
       } else if (sortBy === "alphabetical") {
         sort = { campName: 1 };
       }
+      const pageNumber = parseInt(page);
+      const limitNumber = parseInt(limit);
+      const totalCount = await campCollection.countDocuments(query);
 
-      const result = await campCollection.find(query).sort(sort).toArray();
-      res.send(result);
+      const result = await campCollection
+        .find(query)
+        .skip((pageNumber - 1) * limitNumber)
+        .limit(limitNumber)
+        .sort(sort)
+        .toArray();
+      res.send({
+        result,
+        totalCount,
+        totalPages: Math.ceil(totalCount / limitNumber),
+        currentPage: pageNumber,
+      });
     });
 
     app.get("/camp/:id", async (req, res) => {
