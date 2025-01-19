@@ -81,6 +81,7 @@ async function run() {
           { campName: { $regex: search, $options: "i" } },
           { healthcareProfessionalName: { $regex: search, $options: "i" } },
           { dateTime: { $regex: search, $options: "i" } },
+          { location: { $regex: search, $options: "i" } },
         ],
       };
 
