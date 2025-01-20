@@ -318,7 +318,7 @@ async function run() {
       });
     });
 
-    app.patch("/registered-camps/:email", async (req, res) => {
+    app.patch("/registered-camps/:email", verifyToken, async (req, res) => {
       const email = req.params.email;
       const { confirmationStatus, campId } = req.body;
 
@@ -424,7 +424,7 @@ async function run() {
       });
     });
 
-    app.post("/payments", async (req, res) => {
+    app.post("/payments", verifyToken, async (req, res) => {
       const payment = req.body;
       const paymentResult = await paymentCollection.insertOne(payment);
       const { registeredCampId } = payment;
