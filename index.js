@@ -181,6 +181,7 @@ async function run() {
           healthcareProfessionalName: data.healthcareProfessionalName,
           location: data.location,
           description: data.description,
+          image: data.image
         },
       };
       const result = await campCollection.updateOne(filter, updateDoc);
