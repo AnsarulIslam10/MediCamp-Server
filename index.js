@@ -181,7 +181,7 @@ async function run() {
           healthcareProfessionalName: data.healthcareProfessionalName,
           location: data.location,
           description: data.description,
-          image: data.image
+          image: data.image,
         },
       };
       const result = await campCollection.updateOne(filter, updateDoc);
@@ -424,6 +424,14 @@ async function run() {
       });
     });
 
+    app.get("/payments", verifyToken, async (req, res) => {
+      const result = await paymentCollection.find({}).toArray();
+      res.send({
+        result,
+        totalCount: result.length,
+      });
+    });
+    
     app.post("/payments", verifyToken, async (req, res) => {
       const payment = req.body;
       const paymentResult = await paymentCollection.insertOne(payment);
