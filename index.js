@@ -75,7 +75,7 @@ async function run() {
     app.get("/all-camps", async (req, res) => {
       const search = req.query.search || "";
       const sortBy = req.query.sortBy;
-      const { page = 1, limit = 9 } = req.query;
+      const { page = 1, limit = 12 } = req.query;
       let query = {
         $or: [
           { campName: { $regex: search, $options: "i" } },
@@ -122,7 +122,7 @@ async function run() {
       const result = await campCollection
         .find()
         .sort({ participantCount: -1 })
-        .limit(6)
+        .limit(8)
         .toArray();
       res.send(result);
     });
